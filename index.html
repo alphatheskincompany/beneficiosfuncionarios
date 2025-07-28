@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Benefícios</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- jsPDF CDN for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* Define a fonte Inter para todo o corpo do documento */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-3xl"> <!-- Increased max-width for more horizontal space -->
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Calculadora de Benefícios para Múltiplos Funcionários</h1>
+
+        <div id="employeesContainer" class="space-y-6 mb-8">
+            <!-- Employee input rows will be added here dynamically -->
+        </div>
+
+        <div class="flex justify-end mb-6"> <!-- Container for Add Employee button, aligned right -->
+            <button
+                id="addEmployeeBtn"
+                class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105"
+            >
+                Adicionar Funcionário
+            </button>
+        </div>
+
+        <div class="flex flex-wrap gap-4 justify-center mb-6"> <!-- Container for Calculate and PDF buttons, side-by-side -->
+            <button
+                id="generatePdfBtn"
+                class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg flex-1 min-w-[180px] focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105"
+            >
+                Gerar Relatório PDF
+            </button>
+            <button
+                id="calculateAllBtn"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex-1 min-w-[180px] focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105"
+            >
+                Calcular Todos os Benefícios
+            </button>
+        </div>
+
+        <!-- Div para exibir o resultado total do VR -->
+        <div id="totalVrResult" class="mt-6 p-4 bg-blue-100 border border-blue-300 text-blue-800 rounded-lg text-center font-semibold text-lg hidden">
+            <!-- O resultado total do VR será exibido aqui -->
+        </div>
+
+        <!-- Div para exibir o resultado total do VT -->
+        <div id="totalVtResult" class="mt-4 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg text-center font-semibold text-lg hidden">
+            <!-- O resultado total do VT será exibido aqui -->
+        </div>
+
+        <div id="errorMessage" class="mt-4 p-3 bg-red-100 border border-red-300 text-red-800 rounded-lg text-center font-semibold text-sm hidden">
+            <!-- Mensagens de erro serão exibidas aqui -->
+        </div>
+    </div>
+
+    <script>
+        let employeeCounter = 0; // Counter for unique IDs for each employee row
+
+        // Function to create a new employee input row
+        function createEmployeeRow() {
+            employeeCounter++;
+            const employeeId = `employee-${employeeCounter}`;
+
+            const employeeDiv = document.createElement('div');
+            employeeDiv.id = employeeId;
+            employeeDiv.classList.add('bg-gray-50', 'p-6', 'rounded-lg', 'shadow-sm', 'border', 'border-gray-200');
+
+            employeeDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-700">Funcionário ${employeeCounter}</h2>
+                    <button type="button" class="remove-employee-btn text-red-500 hover:text-red-700 font-bold px-2 py-1 rounded-full text-sm" data-employee-id="${employeeId}">
+                        Remover
+                    </button>
+                </div>
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div class="flex-grow">
+                        <label for="employeeName-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
+                            Nome:
+                        </label>
+                        <input
+                            type="text"
+                            id="employeeName-${employeeId}"
+                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Ex: João Silva"
+                        >
+                    </div>
+                    <div class="w-28"> <!-- Adjusted width for contract type dropdown -->
+                        <label for="contractType-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
+                            Tipo Contrato:
+                        </label>
+                        <select
+                            id="contractType-${employeeId}"
+                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="CLT">CLT</option>
+                            <option value="PJ">PJ</option>
+                        </select>
+                    </div>
+                    <div class="w-24">
+                        <label for="vrDailyValue-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
+                            VR/dia:
+                        </label>
+                        <input
+                            type="number"
+                            id="vrDailyValue-${employeeId}"
+                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="25.00"
+                            step="0.01"
+                        >
+                    </div>
+                    <div class="w-24">
+                        <label for="vtDailyValue-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
+                            VT/dia:
+                        </label>
+                        <input
+                            type="number"
+                            id="vtDailyValue-${employeeId}"
+                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="10.00"
+                            step="0.01"
+                        >
+                    </div>
+                    <div class="w-24">
+                        <label for="daysWorked-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
+                            Dias Trab.:
+                        </label>
+                        <input
+                            type="number"
+                            id="daysWorked-${employeeId}"
+                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="22"
+                        >
+                    </div>
+                    <div class="w-24">
+                        <label for="daysDiscount-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
+                            Dias Desc.:
+                        </label>
+                        <input
+                            type="number"
+                            id="daysDiscount-${employeeId}"
+                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="2"
+                        >
+                    </div>
+                </div>
+                <div id="employeeResult-${employeeId}" class="mt-4 p-3 bg-indigo-100 border border-indigo-300 text-indigo-800 rounded-lg text-center font-semibold text-md hidden">
+                    <!-- Individual employee results will be displayed here -->
+                </div>
+            `;
+            document.getElementById('employeesContainer').appendChild(employeeDiv);
+
+            // Add event listener for the remove button
+            employeeDiv.querySelector('.remove-employee-btn').addEventListener('click', function() {
+                employeeDiv.remove();
+                calculateAllBenefits(); // Recalculate totals after removing an employee
+            });
+
+            // Add event listeners to all input fields in the new row for real-time calculation
+            employeeDiv.querySelectorAll('input, select').forEach(input => { // Added 'select' to the query
+                input.addEventListener('input', calculateAllBenefits);
+                input.addEventListener('change', calculateAllBenefits); // Added 'change' for select elements
+                input.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        calculateAllBenefits();
+                    }
+                });
+            });
+        }
+
+        // Function to calculate benefits for all employees
+        function calculateAllBenefits() {
+            let totalVr = 0;
+            let totalVt = 0;
+            const errorMessageDiv = document.getElementById('errorMessage');
+            errorMessageDiv.classList.add('hidden');
+            errorMessageDiv.textContent = '';
+
+            const employeeRows = document.querySelectorAll('#employeesContainer > div');
+
+            if (employeeRows.length === 0) {
+                document.getElementById('totalVrResult').classList.add('hidden');
+                document.getElementById('totalVtResult').classList.add('hidden');
+                return;
+            }
+
+            employeeRows.forEach(row => {
+                const employeeId = row.id;
+                const vrDailyValue = parseFloat(document.getElementById(`vrDailyValue-${employeeId}`).value);
+                const vtDailyValue = parseFloat(document.getElementById(`vtDailyValue-${employeeId}`).value);
+                const daysWorked = parseInt(document.getElementById(`daysWorked-${employeeId}`).value);
+                const daysDiscount = parseInt(document.getElementById(`daysDiscount-${employeeId}`).value);
+                const employeeName = document.getElementById(`employeeName-${employeeId}`).value || `Funcionário ${employeeId.split('-')[1]}`;
+                const contractType = document.getElementById(`contractType-${employeeId}`).value; // Get contract type
+
+                const employeeResultDiv = document.getElementById(`employeeResult-${employeeId}`);
+                employeeResultDiv.classList.add('hidden'); // Hide previous individual results
+
+                // Basic validation for each employee
+                if (isNaN(vrDailyValue) || vrDailyValue < 0 || isNaN(vtDailyValue) || vtDailyValue < 0 ||
+                    isNaN(daysWorked) || daysWorked <= 0 || isNaN(daysDiscount) || daysDiscount < 0 ||
+                    daysDiscount > daysWorked) {
+                    employeeResultDiv.textContent = `Erro para ${employeeName}: Verifique os valores inseridos.`;
+                    errorMessageDiv.textContent = 'Por favor, verifique os valores de todos os funcionários.';
+                    errorMessageDiv.classList.remove('hidden');
+                    return; // Skip this employee's calculation but continue with others
+                }
+
+                const netDays = daysWorked - daysDiscount;
+                const calculatedVRBenefit = vrDailyValue * netDays;
+                const calculatedVTBenefit = vtDailyValue * netDays;
+                const individualTotalBenefit = calculatedVRBenefit + calculatedVTBenefit; // Calculate individual total
+
+                totalVr += calculatedVRBenefit;
+                totalVt += calculatedVTBenefit;
+
+                employeeResultDiv.textContent = `${employeeName} (${contractType}): VR: R$ ${calculatedVRBenefit.toFixed(2).replace('.', ',')} | VT: R$ ${calculatedVTBenefit.toFixed(2).replace('.', ',')} | Total: R$ ${individualTotalBenefit.toFixed(2).replace('.', ',')}`;
+                employeeResultDiv.classList.remove('hidden');
+            });
+
+            // Display total results
+            const totalVrResultDiv = document.getElementById('totalVrResult');
+            const totalVtResultDiv = document.getElementById('totalVtResult');
+
+            totalVrResultDiv.textContent = `Total VR para todos: R$ ${totalVr.toFixed(2).replace('.', ',')}`;
+            totalVtResultDiv.textContent = `Total VT para todos: R$ ${totalVt.toFixed(2).replace('.', ',')}`;
+
+            // Show totals only if there are employees
+            if (employeeRows.length > 0) {
+                totalVrResultDiv.classList.remove('hidden');
+                totalVtResultDiv.classList.remove('hidden');
+            } else {
+                totalVrResultDiv.classList.add('hidden');
+                totalVtResultDiv.classList.add('hidden');
+            }
+        }
+
+        // Function to generate PDF report
+        function generatePdfReport() {
+            const errorMessageDiv = document.getElementById('errorMessage');
+            errorMessageDiv.classList.add('hidden');
+            errorMessageDiv.textContent = '';
+
+            try {
+                // Access the jsPDF constructor from the global window object
+                if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+                    throw new Error('jsPDF library not fully loaded. Please try again.');
+                }
+                const { jsPDF } = window.jspdf; // Destructure jsPDF constructor
+                const doc = new jsPDF(); // Create a new jsPDF instance
+
+                doc.setFontSize(18);
+                doc.text('Relatório de Benefícios', 14, 22);
+
+                let y = 30; // Initial Y position for content
+
+                const employeeRows = document.querySelectorAll('#employeesContainer > div');
+                if (employeeRows.length === 0) {
+                    throw new Error('Nenhum funcionário para gerar relatório.');
+                }
+
+                doc.setFontSize(12);
+                employeeRows.forEach(row => {
+                    const employeeId = row.id;
+                    const employeeName = document.getElementById(`employeeName-${employeeId}`).value || `Funcionário ${employeeId.split('-')[1]}`;
+                    const contractType = document.getElementById(`contractType-${employeeId}`).value; // Get contract type
+                    const vrDailyValue = parseFloat(document.getElementById(`vrDailyValue-${employeeId}`).value);
+                    const vtDailyValue = parseFloat(document.getElementById(`vtDailyValue-${employeeId}`).value);
+                    const daysWorked = parseInt(document.getElementById(`daysWorked-${employeeId}`).value);
+                    const daysDiscount = parseInt(document.getElementById(`daysDiscount-${employeeId}`).value);
+
+                    // Recalculate to ensure consistency with displayed values
+                    const netDays = daysWorked - daysDiscount;
+                    const calculatedVRBenefit = vrDailyValue * netDays;
+                    const calculatedVTBenefit = vtDailyValue * netDays;
+                    const individualTotalBenefit = calculatedVRBenefit + calculatedVTBenefit;
+
+                    y += 10;
+                    if (y > 280) { // Check for page overflow
+                        doc.addPage();
+                        y = 20;
+                    }
+
+                    doc.text(`Funcionário: ${employeeName} (${contractType})`, 14, y); // Include contract type
+                    y += 7;
+                    doc.text(`  VR/dia: R$ ${vrDailyValue.toFixed(2).replace('.', ',')}`, 14, y);
+                    doc.text(`  VT/dia: R$ ${vtDailyValue.toFixed(2).replace('.', ',')}`, 70, y);
+                    y += 7;
+                    doc.text(`  Dias Trabalhados: ${daysWorked}`, 14, y);
+                    doc.text(`  Dias Desconto: ${daysDiscount}`, 70, y);
+                    y += 7;
+                    doc.text(`  Dias Líquidos: ${netDays}`, 14, y);
+                    y += 7;
+                    doc.text(`  VR Calculado: R$ ${calculatedVRBenefit.toFixed(2).replace('.', ',')}`, 14, y);
+                    doc.text(`  VT Calculado: R$ ${calculatedVTBenefit.toFixed(2).replace('.', ',')}`, 70, y);
+                    y += 7;
+                    doc.text(`  Total Individual: R$ ${individualTotalBenefit.toFixed(2).replace('.', ',')}`, 14, y);
+                    y += 10; // Extra space between employees
+                });
+
+                // Add overall totals
+                const totalVr = parseFloat(document.getElementById('totalVrResult').textContent.replace('Total VR para todos: R$ ', '').replace(',', '.'));
+                const totalVt = parseFloat(document.getElementById('totalVtResult').textContent.replace('Total VT para todos: R$ ', '').replace(',', '.'));
+
+                y += 10;
+                if (y > 280) { // Check for page overflow before adding totals
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.setFontSize(14);
+                doc.text(`Total Geral de VR: R$ ${totalVr.toFixed(2).replace('.', ',')}`, 14, y);
+                y += 10;
+                doc.text(`Total Geral de VT: R$ ${totalVt.toFixed(2).replace('.', ',')}`, 14, y);
+
+                doc.save('relatorio_beneficios.pdf');
+
+            } catch (error) {
+                errorMessageDiv.textContent = `Erro ao gerar o relatório PDF: ${error.message}`;
+                errorMessageDiv.classList.remove('hidden');
+                console.error('PDF generation error:', error);
+            }
+        }
+
+        // Adiciona os event listeners para os botões principais após o DOM ser completamente carregado
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('addEmployeeBtn').addEventListener('click', createEmployeeRow);
+            document.getElementById('calculateAllBtn').addEventListener('click', calculateAllBenefits);
+            document.getElementById('generatePdfBtn').addEventListener('click', generatePdfReport); // New PDF button listener
+            // Adiciona a primeira linha de funcionário quando a página carrega
+            createEmployeeRow();
+        });
+    </script>
+</body>
+</html>
