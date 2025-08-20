@@ -3,455 +3,288 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Benefícios</title>
+    <title>Solicitação de Compra</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- jsPDF CDN for PDF generation -->
+    <!-- jsPDF library for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* Define a fonte Inter para todo o corpo do documento */
+        /* Custom styles for Inter font and general body styling */
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #1f2937; /* Dark gray background */
+        }
+        /* Ensure rounded corners on all elements */
+        .rounded-lg {
+            border-radius: 0.5rem; /* Default Tailwind rounded-lg */
+        }
+        /* Custom focus styles for inputs in dark theme */
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.5); /* Light gray shadow on focus */
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-3xl"> <!-- Increased max-width for more horizontal space -->
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Calculadora de Benefícios</h1>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-2xl text-gray-200">
+        <h1 class="text-3xl font-bold text-gray-100 mb-6 text-center">Formulário de Solicitação de Compra</h1>
 
-        <div id="employeesContainer" class="space-y-6 mb-8">
-            <!-- Employee input rows will be added here dynamically -->
-        </div>
+        <form id="formSolicitacao" class="space-y-6">
+            <!-- Requester Name -->
+            <div>
+                <label for="solicitante" class="block text-sm font-medium text-gray-300 mb-1">Nome do Solicitante:</label>
+                <input type="text" id="solicitante" name="solicitante" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:ring-gray-400 focus:border-gray-400 bg-gray-700 text-gray-100">
+            </div>
 
-        <div class="flex justify-end mb-6"> <!-- Container for Add Employee button, aligned right -->
-            <button
-                id="addEmployeeBtn"
-                class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105"
-            >
-                Adicionar Funcionário
+            <!-- Date (Automatic) -->
+            <div>
+                <label for="dataSolicitacao" class="block text-sm font-medium text-gray-300 mb-1">Data da Solicitação:</label>
+                <input type="text" id="dataSolicitacao" name="dataSolicitacao" readonly
+                       class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm bg-gray-700 text-gray-100 cursor-not-allowed">
+            </div>
+
+            <!-- Purchase Destination -->
+            <div>
+                <label for="centroDeCusto" class="block text-sm font-medium text-gray-300 mb-1">Centro de Custo:</label>
+                <select id="centroDeCusto" name="centroDeCusto" required
+                        class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:ring-gray-400 focus:border-gray-400 bg-gray-700 text-gray-100">
+                    <option value="">Selecione</option>
+                    <option value="Escritório">Escritório</option>
+                    <option value="Clínica">Clínica</option>
+                </select>
+            </div>
+            
+            <!-- Fornecedor -->
+            <div>
+                <label for="fornecedor" class="block text-sm font-medium text-gray-300 mb-1">Fornecedor:</label>
+                <input type="text" id="fornecedor" name="fornecedor" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:ring-gray-400 focus:border-gray-400 bg-gray-700 text-gray-100">
+            </div>
+            
+            <!-- Separated Stock Field -->
+            <div>
+                <label for="estoqueAtual" class="block text-sm font-medium text-gray-300 mb-1">Estoque atual da Clínica (mg):</label>
+                <input type="number" id="estoqueAtual" name="estoqueAtual" min="0" value="0" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:ring-gray-400 focus:border-gray-400 bg-gray-700 text-gray-100">
+            </div>
+
+            <!-- Client Details Section -->
+            <div id="clientDetailsSection" class="space-y-6">
+                <!-- Client Details Block (will be added here) -->
+            </div>
+
+            <!-- Button to add more clients -->
+            <button type="button" id="addClientBtn"
+                    class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-200 ease-in-out shadow-md">
+                Acrescentar Cliente
             </button>
-        </div>
 
-        <div class="flex flex-wrap gap-4 justify-center mb-6"> <!-- Container for Calculate and PDF buttons, side-by-side -->
-            <button
-                id="generatePdfBtn"
-                class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg flex-1 min-w-[180px] focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105"
-            >
-                Gerar Relatório PDF
+            <!-- Total Value -->
+            <div>
+                <label for="valorEstimado" class="block text-sm font-medium text-gray-300 mb-1">Valor Total Estimado (R$):</label>
+                <input type="number" id="valorEstimado" name="valorEstimado" step="0.01" min="0" value="0.00" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:ring-gray-400 focus:border-gray-400 bg-gray-700 text-gray-100">
+            </div>
+
+            <!-- Shipping Cost -->
+            <div>
+                <label for="frete" class="block text-sm font-medium text-gray-300 mb-1">Frete (R$):</label>
+                <input type="number" id="frete" name="frete" step="0.01" min="0" value="0.00" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:ring-gray-400 focus:border-gray-400 bg-gray-700 text-gray-100">
+            </div>
+            
+            <!-- Payment Method -->
+            <div>
+                <label for="formaDePagamento" class="block text-sm font-medium text-gray-300 mb-1">Forma de Pagamento:</label>
+                <select id="formaDePagamento" name="formaDePagamento" required
+                        class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:ring-gray-400 focus:border-gray-400 bg-gray-700 text-gray-100">
+                    <option value="">Selecione</option>
+                    <option value="PIX">PIX</option>
+                    <option value="Boleto à Vista">Boleto à Vista</option>
+                    <option value="Boleto Faturado/Parcelado">Boleto Faturado/Parcelado</option>
+                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                </select>
+            </div>
+
+            <!-- Generate PDF Button -->
+            <button type="submit" id="generatePdfBtn"
+                    class="w-full bg-gray-600 text-gray-100 py-3 px-4 rounded-lg hover:bg-gray-700 transition duration-200 ease-in-out shadow-lg font-semibold text-lg">
+                Gerar PDF
             </button>
-            <button
-                id="calculateAllBtn"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex-1 min-w-[180px] focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105"
-            >
-                Calcular Todos os Benefícios
-            </button>
-        </div>
+        </form>
 
-        <!-- Div para exibir o resultado total do VR -->
-        <div id="totalVrResult" class="mt-6 p-4 bg-blue-100 border border-blue-300 text-blue-800 rounded-lg text-center font-semibold text-lg hidden">
-            <!-- O resultado total do VR será exibido aqui -->
-        </div>
-
-        <!-- Div para exibir o resultado total do VT -->
-        <div id="totalVtResult" class="mt-4 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg text-center font-semibold text-lg hidden">
-            <!-- O resultado total do VT será exibido aqui -->
-        </div>
-
-        <!-- Div para exibir o resultado total da Ajuda de Custo -->
-        <div id="totalAjudaCustoResult" class="mt-4 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg text-center font-semibold text-lg hidden">
-            <!-- O resultado total da Ajuda de Custo será exibido aqui -->
-        </div>
-
-        <div id="errorMessage" class="mt-4 p-3 bg-red-100 border border-red-300 text-red-800 rounded-lg text-center font-semibold text-sm hidden">
-            <!-- Mensagens de erro serão exibidas aqui -->
+        <!-- Submission Confirmation Message -->
+        <div id="confirmationMessage" class="hidden mt-6 p-4 bg-gray-700 text-gray-100 rounded-lg text-center">
+            Relatório PDF gerado com sucesso!
         </div>
     </div>
 
     <script>
-        let employeeCounter = 0; // Counter for unique IDs for each employee row
+        document.addEventListener("DOMContentLoaded", function() {
+            const dataSolicitacaoInput = document.getElementById("dataSolicitacao");
+            dataSolicitacaoInput.value = new Date().toLocaleDateString("pt-BR");
+            
+            const addClientBtn = document.getElementById('addClientBtn');
+            const clientDetailsSection = document.getElementById('clientDetailsSection');
+            
+            let clientCount = 0; // To keep track of clients
 
-        // Function to create a new employee input row
-        function createEmployeeRow() {
-            employeeCounter++;
-            const employeeId = `employee-${employeeCounter}`;
-
-            const employeeDiv = document.createElement('div');
-            employeeDiv.id = employeeId;
-            employeeDiv.classList.add('bg-gray-50', 'p-6', 'rounded-lg', 'shadow-sm', 'border', 'border-gray-200');
-
-            employeeDiv.innerHTML = `
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-gray-700">Funcionário ${employeeCounter}</h2>
-                    <button type="button" class="remove-employee-btn text-red-500 hover:text-red-700 font-bold px-2 py-1 rounded-full text-sm" data-employee-id="${employeeId}">
-                        Remover
-                    </button>
-                </div>
-                <div class="flex flex-wrap gap-4 items-end">
-                    <div class="flex-grow">
-                        <label for="employeeName-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
-                            Nome:
-                        </label>
-                        <input
-                            type="text"
-                            id="employeeName-${employeeId}"
-                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Ex: João Silva"
-                        >
+            // Function to add a new client block
+            const addClientBlock = () => {
+                const newClientBlock = document.createElement('div');
+                newClientBlock.className = 'border border-gray-600 rounded-lg p-4 space-y-4 client-block';
+                newClientBlock.innerHTML = `
+                    <h2 class="text-xl font-semibold text-gray-100">Detalhes do Cliente ${clientCount > 0 ? clientCount + 1 : ''}</h2>
+                    <div>
+                        <label for="clienteNome_${clientCount}" class="block text-sm font-medium text-gray-300 mb-1">Nome do Cliente:</label>
+                        <input type="text" id="clienteNome_${clientCount}" name="clienteNome[]" required
+                            class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:ring-gray-400 focus:border-gray-400 bg-gray-700 text-gray-100">
                     </div>
-                    <div class="w-28"> <!-- Adjusted width for contract type dropdown -->
-                        <label for="contractType-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
-                            Tipo Contrato:
-                        </label>
-                        <select
-                            id="contractType-${employeeId}"
-                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="CLT">CLT</option>
-                            <option value="PJ">PJ</option>
-                        </select>
-                    </div>
-                    <div id="vrVtFields-${employeeId}" class="flex flex-wrap gap-4"> <!-- Container for VR/VT fields -->
-                        <div class="w-24">
-                            <label for="vrDailyValue-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
-                                VR/dia:
-                            </label>
-                            <input
-                                type="number"
-                                id="vrDailyValue-${employeeId}"
-                                class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="25.00"
-                                step="0.01"
-                            >
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="mgUtilizada_${clientCount}" class="block text-sm font-medium text-gray-300 mb-1">mg que será utilizada:</label>
+                            <input type="number" id="mgUtilizada_${clientCount}" name="mgUtilizada[]" min="0" value="0" required
+                                class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:ring-gray-400 focus:border-gray-400 bg-gray-700 text-gray-100">
                         </div>
-                        <div class="w-24">
-                            <label for="vtDailyValue-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
-                                VT/dia:
-                            </label>
-                            <input
-                                type="number"
-                                id="vtDailyValue-${employeeId}"
-                                class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="10.00"
-                                step="0.01"
-                            >
+                        <div>
+                            <label for="aplicacao_${clientCount}" class="block text-sm font-medium text-gray-300 mb-1">Qual aplicação é:</label>
+                            <input type="text" id="aplicacao_${clientCount}" name="aplicacao[]" required
+                                class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:ring-gray-400 focus:border-gray-400 bg-gray-700 text-gray-100">
                         </div>
                     </div>
-                    <div id="ajudaCustoField-${employeeId}" class="w-32 hidden"> <!-- Ajuda de Custo field, hidden by default -->
-                        <label for="ajudaCustoValue-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
-                            Ajuda Custo/mês:
-                        </label>
-                        <input
-                            type="number"
-                            id="ajudaCustoValue-${employeeId}"
-                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="500.00"
-                            step="0.01"
-                        >
+                    <div>
+                        <label for="valorInvestido_${clientCount}" class="block text-sm font-medium text-gray-300 mb-1">Valor já investido pelo cliente (R$):</label>
+                        <input type="number" id="valorInvestido_${clientCount}" name="valorInvestido[]" step="0.01" min="0" value="0.00" required
+                            class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:ring-gray-400 focus:border-gray-400 bg-gray-700 text-gray-100">
                     </div>
-                    <div class="w-24">
-                        <label for="daysWorked-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
-                            Dias Trab.:
-                        </label>
-                        <input
-                            type="number"
-                            id="daysWorked-${employeeId}"
-                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="22"
-                        >
-                    </div>
-                    <div class="w-24">
-                        <label for="daysDiscount-${employeeId}" class="block text-gray-700 text-sm font-semibold mb-2">
-                            Faltas: <!-- Changed label from Dias Desc. to Faltas -->
-                        </label>
-                        <input
-                            type="number"
-                            id="daysDiscount-${employeeId}"
-                            class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="2"
-                        >
-                    </div>
-                </div>
-                <div id="employeeResult-${employeeId}" class="mt-4 p-3 bg-indigo-100 border border-indigo-300 text-indigo-800 rounded-lg text-center font-semibold text-md hidden">
-                    <!-- Individual employee results will be displayed here -->
-                </div>
-            `;
-            document.getElementById('employeesContainer').appendChild(employeeDiv);
-
-            // Add event listener for the remove button
-            employeeDiv.querySelector('.remove-employee-btn').addEventListener('click', function() {
-                employeeDiv.remove();
-                calculateAllBenefits(); // Recalculate totals after removing an employee
-            });
-
-            // Function to toggle visibility and behavior of benefit fields and daysWorked
-            const toggleBenefitFields = () => {
-                const contractType = document.getElementById(`contractType-${employeeId}`).value;
-                const vrVtFields = document.getElementById(`vrVtFields-${employeeId}`);
-                const ajudaCustoField = document.getElementById(`ajudaCustoField-${employeeId}`);
-                const daysWorkedInput = document.getElementById(`daysWorked-${employeeId}`);
-
-                if (contractType === 'CLT') {
-                    vrVtFields.classList.remove('hidden');
-                    ajudaCustoField.classList.add('hidden');
-                    daysWorkedInput.readOnly = false; // Make editable for CLT
-                    daysWorkedInput.classList.remove('bg-gray-200'); // Remove read-only styling
-                } else if (contractType === 'PJ') {
-                    vrVtFields.classList.add('hidden');
-                    ajudaCustoField.classList.remove('hidden');
-                    daysWorkedInput.value = 30; // Set to 30 for PJ
-                    daysWorkedInput.readOnly = true; // Make read-only for PJ
-                    daysWorkedInput.classList.add('bg-gray-200'); // Add read-only styling
+                    ${clientCount > 0 ? `<button type="button" class="remove-client-btn text-sm text-red-400 hover:text-red-500">Remover Cliente</button>` : ''}
+                `;
+                clientDetailsSection.appendChild(newClientBlock);
+                
+                if (clientCount > 0) {
+                    newClientBlock.querySelector('.remove-client-btn').addEventListener('click', () => newClientBlock.remove());
                 }
-                calculateAllBenefits(); // Recalculate after changing visibility/behavior
+                clientCount++;
             };
+            
+            // Add the first client block on page load
+            addClientBlock();
 
-            // Add event listeners to all input fields and select in the new row
-            employeeDiv.querySelectorAll('input, select').forEach(element => {
-                element.addEventListener('input', calculateAllBenefits);
-                element.addEventListener('change', () => {
-                    if (element.id === `contractType-${employeeId}`) {
-                        toggleBenefitFields(); // Call toggle function specifically for contract type change
-                    } else {
-                        calculateAllBenefits();
-                    }
-                });
-                element.addEventListener('keypress', function(event) {
-                    if (event.key === 'Enter') {
-                        calculateAllBenefits();
-                    }
-                });
-            });
+            addClientBtn.addEventListener('click', addClientBlock);
 
-            // Initial toggle based on default selection
-            toggleBenefitFields();
-        }
+        });
 
-        // Function to calculate benefits for all employees
-        function calculateAllBenefits() {
-            let totalVr = 0;
-            let totalVt = 0;
-            let totalAjudaCusto = 0; // New variable for total Ajuda de Custo
-            const errorMessageDiv = document.getElementById('errorMessage');
-            errorMessageDiv.classList.add('hidden');
-            errorMessageDiv.textContent = '';
+        document.getElementById("formSolicitacao").addEventListener("submit", function(e) {
+            e.preventDefault();
 
-            const employeeRows = document.querySelectorAll('#employeesContainer > div');
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
 
-            if (employeeRows.length === 0) {
-                document.getElementById('totalVrResult').classList.add('hidden');
-                document.getElementById('totalVtResult').classList.add('hidden');
-                document.getElementById('totalAjudaCustoResult').classList.add('hidden'); // Hide new total
-                return;
-            }
+            const solicitante = document.getElementById("solicitante").value;
+            const data = document.getElementById("dataSolicitacao").value;
+            const centroDeCusto = document.getElementById("centroDeCusto").value;
+            const fornecedor = document.getElementById("fornecedor").value;
+            const estoqueAtual = parseFloat(document.getElementById("estoqueAtual").value);
+            const valorEstimado = parseFloat(document.getElementById("valorEstimado").value);
+            const frete = parseFloat(document.getElementById("frete").value);
+            const formaDePagamento = document.getElementById("formaDePagamento").value;
+            const totalGeral = (valorEstimado + frete).toFixed(2).replace('.', ',');
 
-            employeeRows.forEach(row => {
-                const employeeId = row.id;
-                const daysWorked = parseInt(document.getElementById(`daysWorked-${employeeId}`).value);
-                const daysDiscount = parseInt(document.getElementById(`daysDiscount-${employeeId}`).value); // This is now 'Faltas'
-                const employeeName = document.getElementById(`employeeName-${employeeId}`).value || `Funcionário ${employeeId.split('-')[1]}`;
-                const contractType = document.getElementById(`contractType-${employeeId}`).value; // Get contract type
+            // Get all client details and sum up mg needed
+            const clientNames = Array.from(document.querySelectorAll('input[name="clienteNome[]"]')).map(input => input.value);
+            const mgUtilizadas = Array.from(document.querySelectorAll('input[name="mgUtilizada[]"]')).map(input => parseFloat(input.value));
+            const aplicacoes = Array.from(document.querySelectorAll('input[name="aplicacao[]"]')).map(input => input.value);
+            const valoresInvestidos = Array.from(document.querySelectorAll('input[name="valorInvestido[]"]')).map(input => parseFloat(input.value));
+            
+            const totalMgUtilizada = mgUtilizadas.reduce((sum, current) => sum + current, 0);
+            const mgParaComprar = totalMgUtilizada - estoqueAtual;
 
-                const employeeResultDiv = document.getElementById(`employeeResult-${employeeId}`);
-                employeeResultDiv.classList.add('hidden'); // Hide previous individual results
+            // PDF Content Generation
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.text("Solicitação de Compra", 105, 20, null, null, "center");
 
-                let calculatedVRBenefit = 0;
-                let calculatedVTBenefit = 0;
-                let individualTotalBenefit = 0;
+            let y = 40;
+            const margin = 20;
+            const pageHeight = doc.internal.pageSize.height;
+            const lineHeight = 5; // Reduced from 7 to 5
 
-                // Basic validation for common fields
-                if (isNaN(daysWorked) || daysWorked <= 0 || isNaN(daysDiscount) || daysDiscount < 0 || daysDiscount > daysWorked) {
-                    employeeResultDiv.textContent = `Erro para ${employeeName}: Verifique os dias trabalhados/faltas.`; // Updated error message
-                    errorMessageDiv.textContent = 'Por favor, verifique os valores de dias/faltas para todos os funcionários.'; // Updated error message
-                    errorMessageDiv.classList.remove('hidden');
-                    return;
-                }
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Data: ${data}`, margin, y);
+            y += lineHeight;
+            doc.text(`Solicitante: ${solicitante}`, margin, y);
+            y += lineHeight;
+            doc.text(`Centro de Custo: ${centroDeCusto}`, margin, y);
+            y += lineHeight;
+            doc.text(`Fornecedor: ${fornecedor}`, margin, y);
+            y += 15;
 
-                const netDays = daysWorked - daysDiscount;
+            doc.setFont("helvetica", "bold");
+            doc.text("Análise de Estoque e Compra:", margin, y);
+            y += 5;
+            doc.setFont("helvetica", "normal");
+            doc.text(`Estoque atual da Clínica (mg): ${estoqueAtual}`, margin, y);
+            y += lineHeight;
+            doc.text(`Total de mg que será utilizada: ${totalMgUtilizada}`, margin, y);
+            y += lineHeight;
+            doc.text(`mg a ser comprada para suprir a demanda: ${mgParaComprar > 0 ? mgParaComprar : 0} mg`, margin, y);
+            y += 15;
 
-                if (contractType === 'CLT') {
-                    const vrDailyValue = parseFloat(document.getElementById(`vrDailyValue-${employeeId}`).value);
-                    const vtDailyValue = parseFloat(document.getElementById(`vtDailyValue-${employeeId}`).value);
-
-                    if (isNaN(vrDailyValue) || vrDailyValue < 0 || isNaN(vtDailyValue) || vtDailyValue < 0) {
-                        employeeResultDiv.textContent = `Erro para ${employeeName} (CLT): Verifique os valores de VR/VT.`;
-                        errorMessageDiv.textContent = 'Por favor, verifique os valores de VR/VT para funcionários CLT.';
-                        errorMessageDiv.classList.remove('hidden');
-                        return;
-                    }
-
-                    calculatedVRBenefit = vrDailyValue * netDays;
-                    calculatedVTBenefit = vtDailyValue * netDays;
-                    individualTotalBenefit = calculatedVRBenefit + calculatedVTBenefit;
-                } else if (contractType === 'PJ') {
-                    const ajudaCustoValue = parseFloat(document.getElementById(`ajudaCustoValue-${employeeId}`).value);
-
-                    if (isNaN(ajudaCustoValue) || ajudaCustoValue < 0) {
-                        employeeResultDiv.textContent = `Erro para ${employeeName} (PJ): Verifique o valor da Ajuda de Custo.`;
-                        errorMessageDiv.textContent = 'Por favor, verifique o valor da Ajuda de Custo para funcionários PJ.';
-                        errorMessageDiv.classList.remove('hidden');
-                        return;
-                    }
-                    // Ajuda de custo mensal dividida pelos dias trabalhados e multiplicada pelos dias líquidos
-                    individualTotalBenefit = (ajudaCustoValue / daysWorked) * netDays;
-                    totalAjudaCusto += individualTotalBenefit; // Accumulate total for PJ
-                }
-
-                totalVr += calculatedVRBenefit; // VR é 0 para PJ, então acumula corretamente
-                totalVt += calculatedVTBenefit; // VT é 0 para PJ, então acumula corretamente
-
-                let resultText = `${employeeName} (${contractType}): `;
-                if (contractType === 'CLT') {
-                    resultText += `VR: R$ ${calculatedVRBenefit.toFixed(2).replace('.', ',')} | VT: R$ ${calculatedVTBenefit.toFixed(2).replace('.', ',')} | `;
-                } else if (contractType === 'PJ') {
-                    resultText += `Ajuda Custo: R$ ${individualTotalBenefit.toFixed(2).replace('.', ',')} | `; // Exibe o total calculado
-                }
-                resultText += `Total: R$ ${individualTotalBenefit.toFixed(2).replace('.', ',')}`;
-
-                employeeResultDiv.textContent = resultText;
-                employeeResultDiv.classList.remove('hidden');
-            });
-
-            // Display total results
-            const totalVrResultDiv = document.getElementById('totalVrResult');
-            const totalVtResultDiv = document.getElementById('totalVtResult');
-            const totalAjudaCustoResultDiv = document.getElementById('totalAjudaCustoResult'); // Get new total div
-
-            totalVrResultDiv.textContent = `Total VR para todos: R$ ${totalVr.toFixed(2).replace('.', ',')}`;
-            totalVtResultDiv.textContent = `Total VT para todos: R$ ${totalVt.toFixed(2).replace('.', ',')}`;
-            totalAjudaCustoResultDiv.textContent = `Total Geral Ajuda Custo: R$ ${totalAjudaCusto.toFixed(2).replace('.', ',')}`; // Set text for new total
-
-            // Show totals only if there are employees
-            if (employeeRows.length > 0) {
-                totalVrResultDiv.classList.remove('hidden');
-                totalVtResultDiv.classList.remove('hidden');
-                totalAjudaCustoResultDiv.classList.remove('hidden'); // Show new total
-            } else {
-                totalVrResultDiv.classList.add('hidden');
-                totalVtResultDiv.classList.add('hidden');
-                totalAjudaCustoResultDiv.classList.add('hidden'); // Hide new total
-            }
-        }
-
-        // Function to generate PDF report
-        function generatePdfReport() {
-            const errorMessageDiv = document.getElementById('errorMessage');
-            errorMessageDiv.classList.add('hidden');
-            errorMessageDiv.textContent = '';
-
-            try {
-                // Access the jsPDF constructor from the global window object
-                if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-                    throw new Error('jsPDF library not fully loaded. Please try again.');
-                }
-                const { jsPDF } = window.jspdf; // Destructure jsPDF constructor
-                const doc = new jsPDF(); // Create a new jsPDF instance
-
-                doc.setFontSize(18);
-                doc.text('Relatório de Benefícios', 14, 22);
-
-                let y = 30; // Initial Y position for content
-
-                const employeeRows = document.querySelectorAll('#employeesContainer > div');
-                if (employeeRows.length === 0) {
-                    throw new Error('Nenhum funcionário para gerar relatório.');
-                }
-
-                doc.setFontSize(12);
-                employeeRows.forEach(row => {
-                    const employeeId = row.id;
-                    const employeeName = document.getElementById(`employeeName-${employeeId}`).value || `Funcionário ${employeeId.split('-')[1]}`;
-                    const contractType = document.getElementById(`contractType-${employeeId}`).value; // Get contract type
-                    const daysWorked = parseInt(document.getElementById(`daysWorked-${employeeId}`).value);
-                    const daysDiscount = parseInt(document.getElementById(`daysDiscount-${employeeId}`).value); // This is now 'Faltas'
-
-                    let calculatedVRBenefit = 0;
-                    let calculatedVTBenefit = 0;
-                    let individualTotalBenefit = 0;
-                    let ajudaCustoValue = 0; // Initialize ajudaCustoValue
-
-                    const netDays = daysWorked - daysDiscount;
-
-                    if (contractType === 'CLT') {
-                        const vrDailyValue = parseFloat(document.getElementById(`vrDailyValue-${employeeId}`).value);
-                        const vtDailyValue = parseFloat(document.getElementById(`vtDailyValue-${employeeId}`).value);
-                        calculatedVRBenefit = vrDailyValue * netDays;
-                        calculatedVTBenefit = vtDailyValue * netDays;
-                        individualTotalBenefit = calculatedVRBenefit + calculatedVTBenefit;
-                    } else if (contractType === 'PJ') {
-                        ajudaCustoValue = parseFloat(document.getElementById(`ajudaCustoValue-${employeeId}`).value);
-                        // Ajuda de custo mensal dividida pelos dias trabalhados e multiplicada pelos dias líquidos
-                        individualTotalBenefit = (ajudaCustoValue / daysWorked) * netDays;
-                    }
-
-
-                    y += 10;
-                    if (y > 280) { // Check for page overflow
-                        doc.addPage();
-                        y = 20;
-                    }
-
-                    doc.text(`Funcionário: ${employeeName} (${contractType})`, 14, y); // Include contract type
-                    y += 7;
-
-                    if (contractType === 'CLT') {
-                        doc.text(`  VR/dia: R$ ${parseFloat(document.getElementById(`vrDailyValue-${employeeId}`).value).toFixed(2).replace('.', ',')}`, 14, y);
-                        doc.text(`  VT/dia: R$ ${parseFloat(document.getElementById(`vtDailyValue-${employeeId}`).value).toFixed(2).replace('.', ',')}`, 70, y);
-                        y += 7;
-                        doc.text(`  Dias Trabalhados: ${daysWorked}`, 14, y);
-                        doc.text(`  Faltas: ${daysDiscount}`, 70, y); // Changed label to Faltas
-                        y += 7;
-                        doc.text(`  Dias Líquidos: ${netDays}`, 14, y);
-                        y += 7;
-                        doc.text(`  VR Calculado: R$ ${calculatedVRBenefit.toFixed(2).replace('.', ',')}`, 14, y);
-                        doc.text(`  VT Calculado: R$ ${calculatedVTBenefit.toFixed(2).replace('.', ',')}`, 70, y);
-                        y += 7;
-                    } else if (contractType === 'PJ') {
-                        // Exibe o valor mensal da ajuda de custo
-                        doc.text(`  Ajuda de Custo/mês: R$ ${parseFloat(document.getElementById(`ajudaCustoValue-${employeeId}`).value).toFixed(2).replace('.', ',')}`, 14, y);
-                        y += 7;
-                        doc.text(`  Faltas: ${daysDiscount}`, 14, y); // Only Faltas for PJ, moved to left
-                        y += 7;
-                        doc.text(`  Ajuda de Custo Calculada: R$ ${individualTotalBenefit.toFixed(2).replace('.', ',')}`, 14, y); // Display calculated total
-                        y += 7; // Extra space for PJ as VR/VT lines are skipped
-                    }
-
-                    doc.text(`  Total Individual: R$ ${individualTotalBenefit.toFixed(2).replace('.', ',')}`, 14, y);
-                    y += 10; // Extra space between employees
-                });
-
-                // Add overall totals
-                const totalVr = parseFloat(document.getElementById('totalVrResult').textContent.replace('Total VR para todos: R$ ', '').replace(',', '.'));
-                const totalVt = parseFloat(document.getElementById('totalVtResult').textContent.replace('Total VT para todos: R$ ', '').replace(',', '.'));
-                const totalAjudaCusto = parseFloat(document.getElementById('totalAjudaCustoResult').textContent.replace('Total Geral Ajuda Custo: R$ ', '').replace(',', '.')); // Get total Ajuda de Custo
-
-                y += 10;
-                if (y > 280) { // Check for page overflow before adding totals
+            doc.setFont("helvetica", "bold");
+            doc.text("Detalhes dos Clientes:", margin, y);
+            y += 5;
+            doc.setFont("helvetica", "normal");
+            
+            // Loop through each client's details to add to PDF
+            for (let i = 0; i < clientNames.length; i++) {
+                const clientTitle = clientNames.length > 1 ? `Detalhes do Cliente ${i + 1}:` : `Detalhes do Cliente:`;
+                if (y + 50 > pageHeight - margin) { // Check space for a full client block
                     doc.addPage();
-                    y = 20;
+                    y = margin;
                 }
-                doc.setFontSize(14);
-                doc.text(`Total Geral de VR: R$ ${totalVr.toFixed(2).replace('.', ',')}`, 14, y);
-                y += 10;
-                doc.text(`Total Geral de VT: R$ ${totalVt.toFixed(2).replace('.', ',')}`, 14, y);
-                y += 10; // Add space for the new total
-                doc.text(`Total Geral Ajuda Custo: R$ ${totalAjudaCusto.toFixed(2).replace('.', ',')}`, 14, y); // Display new total
-
-                doc.save('relatorio_beneficios.pdf');
-
-            } catch (error) {
-                errorMessageDiv.textContent = `Erro ao gerar o relatório PDF: ${error.message}`;
-                errorMessageDiv.classList.remove('hidden');
-                console.error('PDF generation error:', error);
+                doc.setFont("helvetica", "bold");
+                doc.text(clientTitle, margin, y);
+                y += lineHeight;
+                doc.setFont("helvetica", "normal");
+                doc.text(`Nome do Cliente: ${clientNames[i]}`, margin, y);
+                y += lineHeight;
+                doc.text(`mg que será utilizada: ${mgUtilizadas[i]}`, margin, y);
+                y += lineHeight;
+                doc.text(`Aplicação: ${aplicacoes[i]}`, margin, y);
+                y += lineHeight;
+                doc.text(`Valor já investido pelo cliente: R$ ${valoresInvestidos[i].toFixed(2).replace('.', ',')}`, margin, y);
+                y += 10; // Extra space between clients
             }
-        }
 
-        // Adiciona os event listeners para os botões principais após o DOM ser completamente carregado
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('addEmployeeBtn').addEventListener('click', createEmployeeRow);
-            document.getElementById('calculateAllBtn').addEventListener('click', calculateAllBenefits);
-            document.getElementById('generatePdfBtn').addEventListener('click', generatePdfReport); // New PDF button listener
-            // Adiciona a primeira linha de funcionário quando a página carrega
-            createEmployeeRow();
+            y += 10; // Extra space before values
+            if (y + (4 * 10) > pageHeight - margin) {
+                doc.addPage();
+                y = margin;
+            }
+
+            doc.setFont("helvetica", "bold");
+            doc.text("Valores:", margin, y);
+            y += 10;
+            doc.setFont("helvetica", "normal");
+            doc.text(`Valor Total Estimado: R$ ${valorEstimado.toFixed(2).replace('.', ',')}`, margin, y);
+            y += lineHeight;
+            doc.text(`Frete: R$ ${frete.toFixed(2).replace('.', ',')}`, margin, y);
+            y += lineHeight;
+            doc.text(`Forma de Pagamento: ${formaDePagamento}`, margin, y);
+            y += 10;
+
+            doc.setFont("helvetica", "bold");
+            doc.text(`Total Geral: R$ ${totalGeral}`, margin, y);
+            
+            doc.save(`Solicitacao_Compra_${data.replace(/\//g, '_')}.pdf`);
+
+            const confirmationMessage = document.getElementById('confirmationMessage');
+            confirmationMessage.classList.remove('hidden');
+            setTimeout(() => {
+                confirmationMessage.classList.add('hidden');
+            }, 5000);
         });
     </script>
 </body>
